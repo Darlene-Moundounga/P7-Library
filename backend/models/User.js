@@ -1,8 +1,8 @@
 const mongoose = require("mongoose")
 //créer un schéma de donnée pour un user
 const userSchema = mongoose.Schema({
-    email : {type:String, required:true},
-    password : {type:String, required:true} //mdp haché
+    email : {type:String, required:true, unique:true},
+    password : {type:String, required:true} 
 })
 
-//s'assurer que mongoDB prenne l'email en id
+module.exports = mongoose.model("User", userSchema)
