@@ -1,41 +1,37 @@
-// const Book = require("../models/Book")
+const Book = require("../models/Book")
 
-const books = [{
-    userId : "ObjectId('65c4eccf9ce2d6ca6f1b264a')",
-    title : "L'art Subtil de S'en Foutre",
-    author : "Mark Manson",
-    imageUrl : "https://media.e.leclerc/9782212567595_4?op_sharpen=1&resmode=bilin&fmt=pjpeg&qlt=85&wid=450&fit=fit,1&hei=450",
-    genre : "Développement personnel",
-    year : 2016,
-    ratings : [
-        {
-            userId : "ObjectId('65c4eccf9ce2d6ca6f1b264a')",
-            grade : 4
-        }
-    ],
-    averageRating : 4
-},
-{
-    userId : "ObjectId('65c4eccf9ce2d6ca6f1b264a')",
-    title : "La semaine de 4 heures",
-    author : "Timothy Ferriss",
-    imageUrl : "https://abpeditions.fr/wp-content/uploads/final-381x381.png",
-    genre : "Développement personnel",
-    year : 2018,
-    ratings : [
-        {
-            userId : "ObjectId('65c4eccf9ce2d6ca6f1b264a')",
-            grade : 5
-        }
-    ],
-    averageRating : 3
-}
-]
 
 exports.getAllBooks = (req,res) => {
-    res.send(books)
+    Book.find()
+    .then(books => res.send(books))
+    .catch(error => res.status(404).json({error}))
  }
 
  exports.getOneBook = (req,res) => {
     res.send(books[1])
  }
+
+
+ //coder la logique pour ajouter un livre
+
+exports.addBook = (req, res) => {
+    const bookData = JSON.parse(req.body.book)
+    //data book data image envoyée
+    //c'est de créer un chemin vers le fichier 
+    const imgURL = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+
+    //supprimer l'id envoyé par le front
+    delete bookData._id
+    //supprimer le userId envoyé par le front car ne jamais faire confiance au front
+    delete bookData.userId
+
+    const book = new Book({
+        ...bookData,
+        imageUrl: imgURL,
+        userId: req.auth.userId
+    })
+    book.save()
+    .then( () => res.status(201).json({message : "Livre enregistré !"}))
+    .catch( error => res.status(400).json({ error }))
+    
+}

@@ -15,6 +15,7 @@ mongoose.connect(url)
 const app = express()
 
 app.use(express.json())
+app.use("/images", express.static('images'))
 
 // middleware cors
 app.use((req, res, next) => {
