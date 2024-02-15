@@ -8,7 +8,9 @@ exports.getAllBooks = (req,res) => {
  }
 
  exports.getOneBook = (req,res) => {
-    res.send(books[1])
+    Book.findOne({_id:req.params.id})
+    .then(book => res.send(book) )
+    .catch(error => res.status(404).json({error}))
  }
 
 
@@ -22,7 +24,6 @@ exports.addBook = (req, res) => {
 
     //supprimer l'id envoyé par le front
     delete bookData._id
-    //supprimer le userId envoyé par le front car ne jamais faire confiance au front
     delete bookData.userId
 
     const book = new Book({
