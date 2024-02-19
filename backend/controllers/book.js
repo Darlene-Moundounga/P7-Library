@@ -49,11 +49,13 @@ exports.updateBook =  (req, res) => {
 
 const updateBookById =  (req, res) => {
     if(!req.file){
-        req.auth.userId === req.body.userId ? updateRequest(req, res, {...req.body}) : res.status(403).json({message: "Unauthorized request"})
+        req.auth.userId === req.body.userId ? updateRequest(req, res, {...req.body}) 
+        : res.status(403).json({message: "Unauthorized request"})
     } else {
         const bookData = JSON.parse(req.body.book)
         const imageUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-        req.auth.userId === bookData.userId ? updateRequest(req, res, {...bookData, imageUrl}) : res.status(403).json({message: "Unauthorized request"})
+        req.auth.userId === bookData.userId ? updateRequest(req, res, {...bookData, imageUrl}) 
+        : res.status(403).json({message: "Unauthorized request"})
     }
 }
 
@@ -70,3 +72,53 @@ exports.getBestRatingBooks = (req, res) => {
     .catch(error => res.status(400).json( { error }))
     
 }
+
+exports.rateBook = async (req,res) => {
+//     Définit la note pour le user ID fourni(de 0 à 5)
+//userId + note = objet rating
+    const rate = {
+        userId : req.body.userId,
+        grade : req.body.rating
+    }
+
+   try {
+    const bookId = req.params.id
+    const bookToRate = await Book.findOne({_id: bookId  }) // faire une requête pour chercher le livre en question
+    const ratings = bookToRate.ratings
+    //ajouter la nouvelle note au tableau de notes
+    ratings.push(rate)
+    bookToRate.save() // note
+    .then( async () => {
+        const newAverageRating = calculAverageRating(ratings)
+        await updateAverageRating(bookId,newAverageRating)
+        const bookRatingUpdate = await Book.findOne({_id:bookId})
+        res.send(bookRatingUpdate)
+    })   
+    .catch( error => res.status(400).json({ error }))
+   } catch (error) {
+    console.log("Something bad happens : ", error)
+   }
+}
+
+const updateAverageRating = async (id,averageRating) => {
+    try {
+         await Book.updateOne({_id:id},{$set:{averageRating}})
+    } catch (error) {
+        res.json({error})
+    }
+}
+
+
+const calculAverageRating = (ratings) => {
+    const sum = ratings.reduce((acc, rating)=>{
+        return acc + rating.grade
+    },0)
+    
+    const average = sum / ratings.length
+    return average
+}
+
+//     Ajout de l'ID de l'utilisateur + sa note au tableau rating --fait
+//      Utilisateur ne peut pas noter 2 fois
+//     La note moyenne "averageRating" doit être tenue à
+//     jour, et le livre renvoyé en réponse de la requête.
