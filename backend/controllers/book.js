@@ -14,7 +14,6 @@ exports.getAllBooks = (req,res) => {
  }
 
 
- //coder la logique pour ajouter un livre
 
 exports.addBook = (req, res) => {
     const bookData = JSON.parse(req.body.book)
@@ -34,7 +33,6 @@ exports.addBook = (req, res) => {
     book.save()
     .then( () => res.status(201).json({message : "Livre enregistré !"}))
     .catch( error => res.status(400).json({ error }))
-    
 }
 
 exports.deleteBook = (req,res) =>{
@@ -84,15 +82,33 @@ exports.rateBook = async (req,res) => {
    try {
     const bookId = req.params.id
     const bookToRate = await Book.findOne({_id: bookId  }) // faire une requête pour chercher le livre en question
+    if(!bookToRate) {
+        res.status(404).json({message: "Book not found"})
+        return
+    }
     const ratings = bookToRate.ratings
+
+    //chercher si dans le tableau de ratings le userId de l'utilisateur n'existe pas déjà
+        //s'il existe renvoyer erreur 
+        //sinon s'il existe pas update...
+    const existingRate = ratings.find((rating)=>{
+        return rating.userId == req.body.userId
+    })
+
+     if(existingRate){
+        res.status(400).json({message:"You have already rated this book !"})
+        return
+     }
+
     //ajouter la nouvelle note au tableau de notes
     ratings.push(rate)
-    bookToRate.save() // note
+
+    bookToRate.save() // noter
     .then( async () => {
         const newAverageRating = calculAverageRating(ratings)
         await updateAverageRating(bookId,newAverageRating)
-        const bookRatingUpdate = await Book.findOne({_id:bookId})
-        res.send(bookRatingUpdate)
+        const bookRatingUpdated = await Book.findOne({_id:bookId})
+        !bookRatingUpdated ? res.status(404).json({message: "Book not found !"}) : res.send(bookRatingUpdated)
     })   
     .catch( error => res.status(400).json({ error }))
    } catch (error) {
@@ -117,8 +133,3 @@ const calculAverageRating = (ratings) => {
     const average = sum / ratings.length
     return average
 }
-
-//     Ajout de l'ID de l'utilisateur + sa note au tableau rating --fait
-//      Utilisateur ne peut pas noter 2 fois
-//     La note moyenne "averageRating" doit être tenue à
-//     jour, et le livre renvoyé en réponse de la requête.
