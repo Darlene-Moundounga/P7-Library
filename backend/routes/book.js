@@ -10,11 +10,11 @@ router.get("/bestrating", bookCtrl.getBestRatingBooks)
 
 router.get("/:id", bookCtrl.getOneBook)
 
-router.post("/", auth, multer, bookCtrl.addBook)
+router.post("/", auth, multer,multer.resizeImage, bookCtrl.addBook)
 
 router.delete("/:id", auth, bookCtrl.deleteBook)
 
-router.put("/:id", auth, multer, bookCtrl.updateBook)
+router.put("/:id", auth, multer,multer.resizeImage, bookCtrl.updateBook)
 
 router.post("/:id/rating",auth, bookCtrl.rateBook)
 

@@ -22,31 +22,30 @@ function generateToken(id,secret){
     )
 }
 
-exports.createUser = async (req, res) => { //fonction async, car hasPassword est asynchrone
-    const user = new User({ //création d'un nouvel user avec ses propriétés
-      email: req.body.email, //email du user passé dans le body
-      password: await hashPassword(req.body.password) //mdp haché
+exports.createUser = async (req, res) => { 
+    const user = new User({ 
+      email: req.body.email, 
+      password: await hashPassword(req.body.password) 
     });
-    await user.save() //enregistrement du nouvel user
-      .then(() => res.status(201).json({ message: 'Utilisateur inscrit !'})) //envoi du message et modification du statut si l'inscription a bien été réalisée
-      .catch(error=> res.status(400).json({error})) //envoi du message d'erreur et modification du statut si l'inscription a échouée
+    await user.save() 
+      .then(() => res.status(201).json({ message: 'Utilisateur inscrit !'}))
+      .catch(error=> res.status(400).json({error}))
   }
 
   exports.loginUser = (req,res)=>{
-    //récupérer l'email envoyé et de vérifier si un utilisateur existe avec cet email
     User.findOne({email: req.body.email})
     .then(
         async (user) => { 
-            if(user){ // dans ce cas on vérifie le mot de passe
+            if(user){ 
                 const matchPassword = await verifyPassword(req.body.password,user.password)
-                if(matchPassword){ //les password correspondent donc générer le token 
+                if(matchPassword){  
                     const token = generateToken(user._id,secretKey)
                     res.json({userId: user._id, token})
-                }else{ //si le mdp est incorrect
-                    res.status(401).json({message: "Identifiants incorrects"}) //unauthorized
+                }else{ 
+                    res.status(401).json({message: "Identifiants incorrects"}) 
                 }
             }else{
-                res.status(404).json({message: "Utilisateur introuvable"}) //not found
+                res.status(404).json({message: "Utilisateur introuvable"}) 
             }
         }
     )

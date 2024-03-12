@@ -5,7 +5,6 @@ const userRoutes = require("./routes/user")
 const bookRoutes = require("./routes/book")
 
 
-//Connexion à la bd
 const url = `mongodb+srv://darlene:${process.env.DATABASE_PASSWORD}@cluster.rnslr8s.mongodb.net/?retryWrites=true&w=majority`
 
 mongoose.connect(url)
@@ -17,7 +16,6 @@ const app = express()
 app.use(express.json())
 app.use("/images", express.static('images'))
 
-// middleware cors
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');  
     res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');

@@ -16,12 +16,9 @@ exports.getAllBooks = (req,res) => {
 
 
 exports.addBook = (req, res) => {
-    const bookData = JSON.parse(req.body.book)
-    //data book data image envoyée
-    //c'est de créer un chemin vers le fichier 
-    const imgURL = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+    const bookData = JSON.parse(req.body.book) 
+    const imgURL = `${req.protocol}://${req.get('host')}/images/resized_${req.file.filename}`
 
-    //supprimer l'id envoyé par le front
     delete bookData._id
     delete bookData.userId
 
@@ -51,7 +48,7 @@ const updateBookById =  (req, res) => {
         : res.status(403).json({message: "Unauthorized request"})
     } else {
         const bookData = JSON.parse(req.body.book)
-        const imageUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+        const imageUrl = `${req.protocol}://${req.get('host')}/images/resized_${req.file.filename}`
         req.auth.userId === bookData.userId ? updateRequest(req, res, {...bookData, imageUrl}) 
         : res.status(403).json({message: "Unauthorized request"})
     }
@@ -72,8 +69,6 @@ exports.getBestRatingBooks = (req, res) => {
 }
 
 exports.rateBook = async (req,res) => {
-//     Définit la note pour le user ID fourni(de 0 à 5)
-//userId + note = objet rating
     const rate = {
         userId : req.body.userId,
         grade : req.body.rating
@@ -81,16 +76,13 @@ exports.rateBook = async (req,res) => {
 
    try {
     const bookId = req.params.id
-    const bookToRate = await Book.findOne({_id: bookId  }) // faire une requête pour chercher le livre en question
+    const bookToRate = await Book.findOne({_id: bookId  }) 
     if(!bookToRate) {
         res.status(404).json({message: "Book not found"})
         return
     }
-    const ratings = bookToRate.ratings
 
-    //chercher si dans le tableau de ratings le userId de l'utilisateur n'existe pas déjà
-        //s'il existe renvoyer erreur 
-        //sinon s'il existe pas update...
+    const ratings = bookToRate.ratings
     const existingRate = ratings.find((rating)=>{
         return rating.userId == req.body.userId
     })
@@ -99,11 +91,9 @@ exports.rateBook = async (req,res) => {
         res.status(400).json({message:"You have already rated this book !"})
         return
      }
-
-    //ajouter la nouvelle note au tableau de notes
     ratings.push(rate)
 
-    bookToRate.save() // noter
+    bookToRate.save()
     .then( async () => {
         const newAverageRating = calculAverageRating(ratings)
         await updateAverageRating(bookId,newAverageRating)

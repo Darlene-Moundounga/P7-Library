@@ -1,32 +1,50 @@
-//gestion de fichiers
-//importer multer
-
 const multer = require('multer')
+const sharp = require('sharp')
+const path = require('path')
+const fs = require('fs')
 
-const MIMES_TYPES = {
-    'image/jpeg' : 'jpg',
-    'image/jpg' : 'jpg',
-    'image/png': 'png'
-}
-
-// créer un objet de stockage pour spécifier à multer où stocker ton fichier
-
-const storage = multer.diskStorage({
-    //destination du fichier donc où stocker le fichier
+const storage = multer.diskStorage({ 
     destination: (req, file, callback) => {
-        callback(null, "images")
+        callback(null, 'images')
     },
-    // s'attaquer au nom du fichier, rendre le nom unique en ajoutant un timestamp
-    filename: (req, file, callback) => {
-        // récupérer le nom original du fichier // image darlene.jpg
-        const fileName = file.originalname.split(' ').join('_')
-        // récupérer son extension en fonction du mimetype du fichier image/jpeg
-        const extension = MIMES_TYPES[file.mimetype]
-        //modifier le nom du fichier en rajoutant un timestamp 
-        callback(null, fileName + Date.now() + "." + extension) // image darlene.jpg42575752727272727.jpg
+
+    filename: (req, file, callback) => { 
+        const fileName = file.originalname.split(' ').join('_').split('.')[0]
+        callback(null, fileName + Date.now() + '.'+ 'webp') 
     }
-}) // spécifier qu'on sauvegardera sur le disque
+});
 
-//exporter notre config
+module.exports = multer({storage}).single('image');
 
-module.exports = multer({storage}).single('image')
+module.exports.resizeImage = (req, res, next) => {
+    if(!req.file){
+        console.log("No file added")
+        return next()
+    }
+
+    const filePath = req.file.path
+    const fileName = req.file.filename
+    const outputFilePath = path.join('images', `resized_${fileName}`)
+
+    sharp(filePath)
+    .resize({width: 206, height: 260 })
+    .toFile(outputFilePath)
+    .then( () => {
+        fs.unlink(filePath, (error) => {
+            if(error){
+                console.log("Erreur lors de la suppression ancien fichier", error)
+            } else {
+                console.log("L'ancien fichier a bien été supprimé")
+                req.file.path = outputFilePath
+                next()
+            }
+            
+        })
+        
+    })
+    .catch(error => {
+        console.log(error)
+        next()
+    })
+   
+}
